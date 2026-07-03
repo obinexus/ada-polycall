@@ -1,0 +1,6 @@
+build/
+lib/
+*.ali
+*.o
+*.obj
+*.tgz

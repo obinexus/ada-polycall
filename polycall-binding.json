@@ -5,7 +5,13 @@
   "adapter": true,
   "ffi": true,
   "config": "ada-polycallrc",
-  "core": "../../src",
+  "core": "../libpolycall",
+  "entrypoint": "src/ada_polycall.ads",
+  "implementation": "src/ada_polycall.adb",
+  "nativeAdapter": "src/ada_polycall.c",
+  "project": "ada_polycall.gpr",
+  "build": "make",
+  "test": "make test",
   "license": "MIT OBINexus",
   "author": "Nnamdi Michael Okpala"
 }

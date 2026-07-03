@@ -1,28 +1,96 @@
 # ada-polycall
 
-**Ada** binding for [libpolycall](https://github.com/obinexus/libpolycall) — a
-scaffolded adapter (TODO tracked).
+Ada binding for libpolycall 1.5.0, published as
+`@obinexusltd/ada-polycall`. It is a thin adapter: configuration and runtime
+logic remain in libpolycall, while this package maps Ada calls onto
+`polycall_ffi_run_config(config_path, 1)`.
 
-This binding is a *thin adapter*: it contains no runtime or config logic. It
-maps Ada idioms onto the shared C core through the FFI boundary
-(`include/polycall/polycall.h`, `include/polycall/polycall_ffi.h`). See
-[../../docs/adapter-pattern.md](../../docs/adapter-pattern.md).
+## Ada API
 
-## Config
+Add `src/` to the Ada source path and call either API:
 
-Read-only config: [`ada-polycallrc`](ada-polycallrc) — the standard `*polycallrc` convention,
-mapping onto the single shared schema. No per-language parser exists.
+```ada
+with Ada_Polycall;
 
-## Manifest
-
-See [`polycall-binding.json`](polycall-binding.json).
-
-## Build the core first
-
-```bash
-cd ../.. && ./setup.sh      # produces build/libpolycall.a + the shared library
+procedure Main is
+   Status : Integer;
+begin
+   Status := Ada_Polycall.Run_Config ("ada-polycallrc");
+   Ada_Polycall.Run_Config_Or_Raise ("ada-polycallrc");
+end Main;
 ```
 
-## Status
+`Run_Config` returns the libpolycall status unchanged.
+`Run_Config_Or_Raise` raises the Ada-native `Polycall_Error` exception when
+the status is nonzero.
 
-🧩 Scaffolded. Wiring tracked in [TODO.md](TODO.md) and [../../docs/release/TODO-1.5.md](../../docs/release/TODO-1.5.md).
+## npm source package
+
+Install the package:
+
+```sh
+npm install @obinexusltd/ada-polycall
+```
+
+The CommonJS entry point exposes absolute paths for build tooling:
+
+```js
+const polycall = require('@obinexusltd/ada-polycall');
+
+console.log(polycall.adaSpec);
+console.log(polycall.adaBody);
+console.log(polycall.nativeAdapter);
+console.log(polycall.publicHeader);
+console.log(polycall.ffiHeader);
+console.log(polycall.project);
+console.log(polycall.config);
+```
+
+The npm tarball explicitly includes `src/`, `include/`, `generated/`,
+`examples/`, `scripts/`, and `tests/`, plus the GNAT project, Makefile,
+manifest, and read-only runtime configuration. Platform-specific build output
+is excluded.
+
+## Build and test
+
+Build the portable native forwarding archive with GCC:
+
+```sh
+make
+# or
+npm run build
+```
+
+With GNAT and GPRbuild installed, build the complete Ada library:
+
+```sh
+make ada
+# or
+npm run build:ada
+```
+
+The native boundary and npm package tests do not require GNAT:
+
+```sh
+npm test
+npm run verify
+```
+
+Run the Ada smoke test when GNAT is available:
+
+```sh
+npm run test:ada
+```
+
+## Core integration
+
+A real integration run requires a libpolycall v1.5 library exporting
+`polycall_ffi_run_config`. Link it into the Ada executable with:
+
+```sh
+make example POLYCALL_LDFLAGS="-L/path/to/libpolycall/lib -lpolycall"
+```
+
+The runnable program is [`examples/basic.adb`](examples/basic.adb). The
+read-only shared-schema override is [`ada-polycallrc`](ada-polycallrc); the
+binding never parses or modifies it.

@@ -1,0 +1,71 @@
+{
+  "name": "@obinexusltd/ada-polycall",
+  "version": "0.1.0",
+  "description": "Ada binding for the libpolycall 1.5.0 C FFI.",
+  "keywords": [
+    "ada",
+    "gnat",
+    "libpolycall",
+    "ffi",
+    "polyglot"
+  ],
+  "homepage": "https://github.com/obinexus/ada-polycall#readme",
+  "bugs": {
+    "url": "https://github.com/obinexus/ada-polycall/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/obinexus/ada-polycall.git"
+  },
+  "license": "MIT",
+  "author": "Nnamdi Michael Okpala",
+  "type": "commonjs",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./src/*": "./src/*",
+    "./include/*": "./include/*",
+    "./generated/*": "./generated/*",
+    "./examples/*": "./examples/*",
+    "./config": "./ada-polycallrc",
+    "./manifest": "./polycall-binding.json",
+    "./project": "./ada_polycall.gpr",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "src/",
+    "include/",
+    "generated/",
+    "examples/",
+    "scripts/",
+    "tests/",
+    "ada_polycall.gpr",
+    "Makefile",
+    "polycall-binding.json",
+    "ada-polycallrc",
+    "README.md",
+    "TODO.md"
+  ],
+  "directories": {
+    "example": "examples",
+    "lib": "lib",
+    "test": "tests"
+  },
+  "scripts": {
+    "build": "make",
+    "build:ada": "make ada",
+    "clean": "make clean",
+    "test": "make test && node tests/package.test.js",
+    "test:ada": "make test-ada",
+    "verify": "make verify-dry",
+    "prepack": "npm run test && npm run verify"
+  },
+  "engines": {
+    "node": ">=18",
+    "npm": ">=9"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

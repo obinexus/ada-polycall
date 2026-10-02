@@ -1,0 +1,9 @@
+with "../ada_polycall.gpr";
+
+project Ada_Polycall_Examples is
+   for Languages use ("Ada");
+   for Source_Dirs use (".");
+   for Object_Dir use "../build/examples";
+   for Exec_Dir use "../build";
+   for Main use ("basic.adb");
+end Ada_Polycall_Examples;

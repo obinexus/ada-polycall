@@ -1,10 +1,11 @@
 {
   "name": "@obinexusltd/ada-polycall",
   "version": "0.1.0",
-  "description": "Ada binding for the libpolycall 1.5.0 C FFI.",
+  "description": "Ada binding for the Polycall core (polycall >= 1.1.0, binding ABI 1): pragma Import over <polycall.h>.",
   "keywords": [
     "ada",
     "gnat",
+    "polycall",
     "libpolycall",
     "ffi",
     "polyglot"
@@ -18,14 +19,15 @@
     "url": "git+https://github.com/obinexus/ada-polycall.git"
   },
   "license": "MIT",
-  "author": "Nnamdi Michael Okpala",
+  "author": {
+    "name": "Nnamdi Michael Okpala",
+    "email": "okpalan@protonmail.com"
+  },
   "type": "commonjs",
   "main": "index.js",
   "exports": {
     ".": "./index.js",
     "./src/*": "./src/*",
-    "./include/*": "./include/*",
-    "./generated/*": "./generated/*",
     "./examples/*": "./examples/*",
     "./config": "./ada-polycallrc",
     "./manifest": "./polycall-binding.json",
@@ -35,8 +37,6 @@
   "files": [
     "index.js",
     "src/",
-    "include/",
-    "generated/",
     "examples/",
     "scripts/",
     "tests/",
@@ -45,7 +45,8 @@
     "polycall-binding.json",
     "ada-polycallrc",
     "README.md",
-    "TODO.md"
+    "TODO.md",
+    "LICENSE"
   ],
   "directories": {
     "example": "examples",

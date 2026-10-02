@@ -1,17 +1,20 @@
 {
   "name": "ada-polycall",
-  "version": "1.5.0",
+  "version": "0.1.0",
+  "package": "@obinexusltd/ada-polycall",
   "language": "Ada",
   "adapter": true,
   "ffi": true,
+  "abi": 1,
   "config": "ada-polycallrc",
-  "core": "../libpolycall",
+  "core": "polycall >= 1.1.0 (binding ABI 1)",
+  "core_repository": "https://github.com/obinexus/polycall",
+  "repository": "https://github.com/obinexus/ada-polycall",
   "entrypoint": "src/ada_polycall.ads",
   "implementation": "src/ada_polycall.adb",
-  "nativeAdapter": "src/ada_polycall.c",
   "project": "ada_polycall.gpr",
   "build": "make",
   "test": "make test",
-  "license": "MIT OBINexus",
-  "author": "Nnamdi Michael Okpala"
+  "license": "MIT",
+  "author": "Nnamdi Michael Okpala <okpalan@protonmail.com>"
 }

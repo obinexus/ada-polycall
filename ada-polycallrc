@@ -1,8 +1,11 @@
-# ada-polycallrc - read-only Ada runtime overrides for libpolycall
+# ada-polycallrc - Ada runtime overrides for Polycall
 #
-# This file uses the SHARED polycall schema (src/config/polycall_config_schema.c).
-# It introduces no new keys or parser: the Ada adapter passes this path to
-# the core via the FFI boundary. Values here override polycallrc for Ada.
+# Grammar: the core's own configuration grammar -- exactly what
+# `polycall config validate ada-polycallrc` and polycall_ffi_run_config() accept
+# (Polycall core >= 1.1.0, https://github.com/obinexus/polycall). The Ada
+# binding adds no keys and no parser: it passes this path to
+# polycall_ffi_run_config(path, 1), which validates it strictly for this build
+# (unknown keys and tls_enabled=true are rejected).
 
 log_level=info
 max_connections=1000

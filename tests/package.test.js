@@ -16,10 +16,6 @@ assert.equal(
   binding.adaSpec
 );
 assert.equal(
-  require.resolve('@obinexusltd/ada-polycall/include/ada_polycall.h'),
-  binding.publicHeader
-);
-assert.equal(
   require.resolve('@obinexusltd/ada-polycall/project'),
   binding.project
 );

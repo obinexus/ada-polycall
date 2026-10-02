@@ -1,5 +1,8 @@
+--  Ada binding for the Polycall binding ABI v1 (polycall >= 1.1.0).
+--  The core is linked by name (-lpolycall); give its library directory with
+--  -XPOLYCALL_LDFLAGS="$(pkg-config --libs-only-L polycall)" (or LIBRARY_PATH).
 library project Ada_Polycall is
-   for Languages use ("Ada", "C");
+   for Languages use ("Ada");
    for Source_Dirs use ("src");
    for Object_Dir use "build/obj";
    for Library_Dir use "lib";
@@ -8,9 +11,11 @@ library project Ada_Polycall is
 
    package Compiler is
       for Default_Switches ("Ada") use
-        ("-gnat12", "-gnatwa");
-      for Default_Switches ("C") use
-        ("-std=c11", "-Wall", "-Wextra", "-Wpedantic",
-         "-Iinclude", "-Igenerated");
+        ("-gnat2012", "-gnatwa", "-gnatwe", "-g", "-O2");
    end Compiler;
+
+   package Linker is
+      for Linker_Options use
+        ("-lpolycall") & External_As_List ("POLYCALL_LDFLAGS", " ");
+   end Linker;
 end Ada_Polycall;

@@ -3,3 +3,6 @@
 *.ali
 *.o
 *.obj
+*.tgz
+.polycall-qa.*
+ada_cli_*

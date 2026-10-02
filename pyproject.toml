@@ -1,0 +1,15 @@
+# QA descriptor for the Polycall binding matrix (read by polycall/qa/run_qa.py).
+# This repository is NOT a Python package and is not pip-installable;
+# its native manifest is ada_polycall.gpr (npm source package: package.json).
+[tool.polycall.binding]
+name = "ada-polycall"
+language = "Ada"
+native_manifest = "ada_polycall.gpr"
+registry = "npm"
+package = "@obinexusltd/ada-polycall"
+abi = 1
+support = "supported"
+linux_image = "node:22"
+build = "sh /qa/build-linux-core.sh && apt-get install -y gnat gprbuild && export PKG_CONFIG_PATH=/opt/polycall/lib/pkgconfig LD_LIBRARY_PATH=/opt/polycall/lib PATH=/opt/polycall/bin:$PATH && make"
+test = "make test && make verify-dry"
+windows_test = ""

@@ -1,0 +1,4 @@
+# QA fixture: valid syntax, one key this build does not know.
+# run=0 (validate) -> warning only; run=1 (strict) -> POLYCALL_E_CONFIG.
+log_level=info
+qa_unknown_key=1

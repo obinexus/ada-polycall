@@ -1,22 +1,19 @@
 $ErrorActionPreference = 'Stop'
 
+# Thin-adapter audit (see verify-dry.sh).
 $root = Split-Path -Parent $PSScriptRoot
-$sources = @(
-    (Join-Path $root 'src/ada_polycall.c'),
-    (Join-Path $root 'src/ada_polycall.ads'),
-    (Join-Path $root 'src/ada_polycall.adb')
-)
-$forbidden = 'fopen|open\(|CreateFile|sscanf|strtok|socket\(|connect\('
-$matches = Select-String -Path $sources -Pattern $forbidden
-
-if ($matches) {
-    $matches | ForEach-Object { Write-Error $_.Line }
+$body = Join-Path $root 'src/ada_polycall.adb'
+$spec = Join-Path $root 'src/ada_polycall.ads'
+$found = Select-String -Path $body, $spec -Pattern 'GNAT\.Sockets|Ada\.Text_IO\.Open|Stream_IO|sscanf|strtok'
+if ($found) {
+    $found | ForEach-Object { Write-Error $_.Line }
     throw 'ada-polycall must not parse configuration or implement runtime logic'
 }
-
-$adapter = Get-Content -Raw (Join-Path $root 'src/ada_polycall.c')
-if (-not $adapter.Contains('polycall_ffi_run_config(config_path, 1)')) {
-    throw 'ada-polycall does not forward through polycall_ffi_run_config'
+$source = Get-Content -Raw $body
+foreach ($sym in @('polycall_ffi_abi_version', 'polycall_ffi_run_config', 'polycall_call',
+                   'polycall_peer_open', 'polycall_peer_send', 'polycall_peer_recv')) {
+    if (-not $source.Contains("External_Name => `"$sym`"")) {
+        throw "ada-polycall does not import $sym"
+    }
 }
-
 Write-Output 'ada-polycall thin-adapter check: PASS'

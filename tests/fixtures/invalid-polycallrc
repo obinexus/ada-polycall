@@ -1,0 +1,3 @@
+# QA fixture: malformed syntax -> POLYCALL_E_CONFIG in both modes.
+log_level
+=== bad

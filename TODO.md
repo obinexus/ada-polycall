@@ -1,12 +1,13 @@
 # TODO — ada-polycall (Ada)
 
-Status: implemented thin adapter for libpolycall 1.5.0.
+Status: supported (Linux, GNAT 12) -- Ada binding over Polycall binding ABI v1
+(polycall >= 1.1.0).
 
-- [x] Folder structure, manifest, and `ada-polycallrc` (shared schema)
-- [x] Generate the consumed declaration from `polycall_ffi.h`
-- [x] Implement the thin adapter in `src/` (Ada/C -> `polycall_ffi_run_config`)
-- [x] Add a runnable example under `examples/`
-- [x] Add native and Ada smoke tests under `tests/`
-- [x] Add `scripts/verify-dry.sh` (no core duplication)
+- [x] `Run_Config` / `Run_Config_Or_Raise` kept (strict and validate modes)
+- [x] Direct `Import`/`Convention => C` binding of the whole ABI (no C shim)
+- [x] `Peer` (limited controlled), `Message`, `Call`, `Describe`, version/ABI
+- [x] Real-core tests incl. Ada tasks and interop with the C CLI
+- [ ] Windows (GNAT/MinGW) run
+- [ ] Publish `@obinexusltd/ada-polycall` (not published yet)
 
 Do not add config parsing or runtime logic here — adapt the core only.

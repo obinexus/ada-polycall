@@ -1,0 +1,5 @@
+# QA fixture: complete TLS settings. run=0 accepts them; run=1 refuses with
+# POLYCALL_E_UNSUPPORTED because this build has no TLS transport.
+tls_enabled=true
+cert_file=qa-cert.pem
+key_file=qa-key.pem

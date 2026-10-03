@@ -249,13 +249,17 @@ package body Ada_Polycall is
       Status     : out Status_Code;
       Output     : out Unbounded_String)
    is
-      Buf   : Char_Array_Access :=
-        new char_array (0 .. size_t (Max_Call_Output));
+      Buf   : Char_Array_Access;
       Input : constant char_array := To_C (Input_JSON);
       Len   : size_t := 0;
       St    : int;
    begin
-      Require_ABI;
+      if Integer (C_ABI_Version) /= Expected_ABI_Version then
+         Status := E_Unsupported;   --  non-raising form: report, do not raise
+         Output := Null_Unbounded_String;
+         return;
+      end if;
+      Buf := new char_array (0 .. size_t (Max_Call_Output));
       Buf (0) := nul;
       Buf (Buf'Last) := nul;
       St := C_Call
@@ -281,6 +285,7 @@ package body Ada_Polycall is
       Status : Status_Code;
       Output : Unbounded_String;
    begin
+      Require_ABI;   --  raises Polycall_Error naming the ABI it found
       Call (Endpoint, Service, Operation, Input_JSON, Timeout_Ms,
             Status, Output);
       if Status /= OK then

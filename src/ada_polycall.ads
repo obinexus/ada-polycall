@@ -78,6 +78,8 @@ package Ada_Polycall is
    --  Output is the operation's output JSON, or the remote error object
    --  {"code":..,"message":..} when Status is E_Remote / E_Not_Found /
    --  E_Timeout / E_Busy.
+   --  Raises no Polycall_Error: a library not speaking binding ABI 1 gives
+   --  Status = E_Unsupported (nothing is sent).
    procedure Call
      (Endpoint, Service, Operation : String;
       Input_JSON : String;

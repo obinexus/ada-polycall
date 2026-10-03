@@ -12,11 +12,11 @@ for (const [name, file] of Object.entries(binding)) {
 }
 
 assert.equal(
-  require.resolve('@obinexusltd/ada-polycall/src/ada_polycall.ads'),
+  require.resolve('ada-polycall/src/ada_polycall.ads'),
   binding.adaSpec
 );
 assert.equal(
-  require.resolve('@obinexusltd/ada-polycall/project'),
+  require.resolve('ada-polycall/project'),
   binding.project
 );
 

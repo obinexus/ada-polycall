@@ -1,5 +1,5 @@
 {
-  "name": "@obinexusltd/ada-polycall",
+  "name": "ada-polycall",
   "version": "0.1.0",
   "description": "Ada binding for the Polycall core (polycall >= 1.1.0, binding ABI 1): pragma Import over <polycall.h>.",
   "keywords": [

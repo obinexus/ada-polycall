@@ -1,7 +1,7 @@
 {
   "name": "ada-polycall",
   "version": "0.1.0",
-  "package": "@obinexusltd/ada-polycall",
+  "package": "ada-polycall",
   "language": "Ada",
   "adapter": true,
   "ffi": true,

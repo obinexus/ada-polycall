@@ -9,6 +9,6 @@ Status: supported (Linux, GNAT 12) -- Ada binding over Polycall binding ABI v1
 - [x] Real-core tests incl. Ada tasks and interop with the C CLI
 - [x] Loader errors (missing / old / ABI-mismatched library), valgrind run
 - [ ] Windows (GNAT/MinGW) run -- needs GNAT + GPRbuild on the Windows host
-- [ ] Publish `@obinexusltd/ada-polycall` (not published yet)
+- [ ] Publish `ada-polycall` (not published yet)
 
 Do not add config parsing or runtime logic here — adapt the core only.

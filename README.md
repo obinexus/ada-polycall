@@ -1,7 +1,7 @@
 # ada-polycall
 
 Ada binding for the [Polycall](https://github.com/obinexus/polycall) core,
-published as the npm source package `@obinexusltd/ada-polycall`.
+published as the npm source package `ada-polycall`.
 
 The package `Ada_Polycall` imports the core's **binding ABI v1**
 (`<polycall.h>`, `docs/BINDING_ABI.md` in the core repository) directly with
@@ -93,7 +93,7 @@ run on Windows yet -- the QA host has no GNAT (MinGW GNAT + GPRbuild needed).
 ## npm source package
 
 ```sh
-npm install @obinexusltd/ada-polycall
+npm install ada-polycall
 ```
 
 The CommonJS entry point only exposes absolute paths (`adaSpec`, `adaBody`,

@@ -6,9 +6,11 @@
 #
 # The program (tests/loader_check.*) prints "loader-check: <step>=<status>"
 # lines. It is started four times with LD_LIBRARY_PATH pointing at:
-#   1. the real installed core            -> every step returns 0
+#   1. the real installed core            -> every step works (the call to
+#      127.0.0.1:1, where nothing listens, is E_TRANSPORT = -5)
 #   2. a fake library speaking ABI 2      -> the binding refuses it with
-#      POLYCALL_E_UNSUPPORTED (-15) naming the ABI, and exits normally
+#      POLYCALL_E_UNSUPPORTED (-15) naming the ABI (check_abi, run_config,
+#      call, peer open), and the program exits normally
 #   3. a fake "old 1.0" library (no ABI v1 symbols) -> the dynamic loader
 #      stops the program with "undefined symbol: polycall_..." (exit 127)
 #   4. no library at all                  -> the dynamic loader stops the
@@ -98,7 +100,8 @@ run_with() {
 echo "-- 1. real core ($libdir)"
 run_with "$libdir"
 ok=1
-[ "$rc" -eq 0 ] && has "check_abi=0" && has "run_config=0" && has "peer_open=0" && ok=0
+[ "$rc" -eq 0 ] && has "check_abi=0" && has "run_config=0" && has "call=-5" \
+    && has "peer_open=0" && ok=0
 check $ok "loader: the real core loads and passes the ABI check"
 
 echo "-- 2. library that reports binding ABI 2"
@@ -108,8 +111,8 @@ ok=1
     && has "ABI 2" && ok=0
 check $ok "loader: ABI 2 library -> check_abi raises E_UNSUPPORTED naming the ABI"
 ok=1
-has "run_config=-15" && has "peer_open=-15" && ok=0
-check $ok "loader: ABI 2 library -> run_config / peer open refuse it (E_UNSUPPORTED), no crash"
+has "run_config=-15" && has "call=-15" && has "peer_open=-15" && ok=0
+check $ok "loader: ABI 2 library -> run_config / call / peer open refuse it (E_UNSUPPORTED), no crash"
 
 echo "-- 3. old library without the binding ABI v1 symbols"
 run_with "$work/v10"

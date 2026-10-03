@@ -57,22 +57,38 @@ installed core found through pkg-config:
 
 ```sh
 export PKG_CONFIG_PATH=/opt/polycall/lib/pkgconfig LD_LIBRARY_PATH=/opt/polycall/lib
-make            # lib/libada_polycall.a  (gprbuild -P ada_polycall.gpr)
-make test       # real-core test + interop with the polycall CLI
-make example    # examples/basic.adb
+make              # lib/libada_polycall.a  (gprbuild -P ada_polycall.gpr)
+make test         # real-core test + interop with the polycall CLI
+make test-loader  # missing library / old library / ABI mismatch (Linux)
+make memcheck     # the real-core test under valgrind memcheck
+make example      # examples/basic.adb
 ```
 
 Without `make`, pass the core's library directory yourself:
 `gprbuild -P ada_polycall.gpr -XPOLYCALL_LDFLAGS="-L<prefix>/lib"`. Projects
 that `with "ada_polycall.gpr"` inherit `-lpolycall` through
-`Linker_Options`.
+`Linker_Options` (gprbuild also records that directory as the program's
+RUNPATH).
 
 `make test` builds `tests/ada_polycall_test.adb` and runs it through
 `tests/run-real.sh`, which starts `polycall peer serve` and `polycall start`.
-A missing GNAT or polycall CLI is reported as SKIP (exit 77), never as
-success. See [tests/TESTS.md](tests/TESTS.md).
+A missing GNAT, polycall CLI or valgrind is reported as SKIP (exit 77), never
+as success. See [tests/TESTS.md](tests/TESTS.md).
 
-Windows: not tested (no GNAT on the QA host).
+### Loading
+
+The core is linked (`-lpolycall`), so the dynamic loader resolves
+`libpolycall.so.1` when the program starts. A missing library stops the
+program with the loader's `libpolycall.so.1: cannot open shared object file`
+(exit 127); a 1.0 library without the binding ABI v1 symbols with
+`undefined symbol: polycall_...` (exit 127); neither is a crash. A library
+that reports another binding ABI is refused: `Check_ABI`, `Run_Config`,
+`Describe`, `Call` and `Open` fail with `E_UNSUPPORTED` (`Polycall_Error`
+naming the ABI it reported).
+`make test-loader` checks all three against fake libraries.
+
+Windows: the Makefile builds `.exe` programs, but the binding has not been
+run on Windows yet -- the QA host has no GNAT (MinGW GNAT + GPRbuild needed).
 
 ## npm source package
 

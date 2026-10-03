@@ -1,0 +1,17 @@
+--  tests/loader_check.adb for tests/loader-errors.sh. Build it WITHOUT a run
+--  path (gprbuild -R), so the library it loads is chosen by LD_LIBRARY_PATH
+--  only: by default gprbuild records the core's library directory as RUNPATH.
+with "../ada_polycall.gpr";
+
+project Loader_Check is
+   for Languages use ("Ada");
+   for Source_Dirs use (".");
+   for Source_Files use ("loader_check.adb");
+   for Object_Dir use "../build/loader";
+   for Exec_Dir use "../build";
+   for Main use ("loader_check.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use ("-gnat2012", "-gnatwa", "-g");
+   end Compiler;
+end Loader_Check;

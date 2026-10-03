@@ -9,11 +9,15 @@ GPRFLAGS ?= -p
 GPRFLAGS += -XPOLYCALL_LDFLAGS="$(POLYCALL_LDFLAGS)"
 
 TEST_BIN := build/ada_polycall_test
+LOADER_BIN := build/loader_check
 EXAMPLE_BIN := build/basic
 ifeq ($(OS),Windows_NT)
 TEST_BIN := $(TEST_BIN).exe
+LOADER_BIN := $(LOADER_BIN).exe
 EXAMPLE_BIN := $(EXAMPLE_BIN).exe
 endif
+VALGRIND ?= valgrind
+VALGRIND_FLAGS ?= --error-exitcode=99 --leak-check=full --errors-for-leak-kinds=definite --track-origins=yes
 
 .DEFAULT_GOAL := all
 
@@ -38,6 +42,19 @@ build-tests: check-toolchain check-core
 .PHONY: test test-ada
 test test-ada: build-tests
 	sh tests/run-real.sh $(TEST_BIN) .
+
+# Missing library, old library without ABI v1 symbols, ABI mismatch
+# (Linux; exit 77 = SKIP elsewhere). See tests/loader-errors.sh.
+.PHONY: test-loader
+test-loader: check-toolchain check-core
+	$(GPRBUILD) $(GPRFLAGS) -R -P tests/loader_check.gpr
+	sh tests/loader-errors.sh $(LOADER_BIN) .
+
+# The real-core test under valgrind memcheck (exit 77 = SKIP without it).
+.PHONY: memcheck
+memcheck: build-tests
+	@command -v $(VALGRIND) >/dev/null 2>&1 || { echo "SKIP: $(VALGRIND) not found"; exit 77; }
+	sh tests/run-real.sh $(VALGRIND) $(VALGRIND_FLAGS) $(TEST_BIN) .
 
 .PHONY: example
 example: check-toolchain check-core

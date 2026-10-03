@@ -136,6 +136,39 @@ procedure Ada_Polycall_Test is
       Check (Contains (Error_Name (-999), "POLYCALL_E_UNKNOWN"), "strerror of an unknown code");
    end Test_Version;
 
+   --  tests/fixtures/<U>: a valid configuration whose file name is not
+   --  ASCII. Ada strings are byte strings here, so the name is spelled as
+   --  its UTF-8 bytes and passed to polycall_ffi_run_config unchanged.
+   procedure Test_Unicode_Path (Fx : String) is
+      U : constant String :=
+        Character'Val (16#C3#) & Character'Val (16#BC#) & "n"
+        & Character'Val (16#C3#) & Character'Val (16#AF#) & "c"
+        & Character'Val (16#C3#) & Character'Val (16#B8#) & "d"
+        & Character'Val (16#C3#) & Character'Val (16#A9#) & "-"
+        & Character'Val (16#E9#) & Character'Val (16#85#) & Character'Val (16#8D#)
+        & Character'Val (16#E7#) & Character'Val (16#BD#) & Character'Val (16#AE#)
+        & "-polycallrc";
+   begin
+      Expect (OK, Run_Config (Fx & U), "run_config: non-ASCII (UTF-8) path, strict");
+      Expect (OK, Run_Config (Fx & U, Strict => False), "run_config: non-ASCII (UTF-8) path, validate");
+      begin
+         Check (Contains (Describe (Fx & U), "log_level"), "describe: non-ASCII (UTF-8) path");
+      exception
+         when E : Polycall_Error =>
+            Check (False, "describe: non-ASCII (UTF-8) path", Ada.Exceptions.Exception_Message (E));
+      end;
+      begin
+         Run_Config_Or_Raise (Fx & "missing-" & U);
+         Check (False, "run_config: missing non-ASCII path -> E_NOT_FOUND", "no exception");
+      exception
+         when E : Polycall_Error =>
+            Expect (E_Not_Found, Status_Of (E), "run_config: missing non-ASCII path -> E_NOT_FOUND");
+            Check (Contains (Ada.Exceptions.Exception_Message (E), "missing-" & U),
+                   "run_config: last_error detail keeps the UTF-8 path bytes",
+                   Ada.Exceptions.Exception_Message (E));
+      end;
+   end Test_Unicode_Path;
+
    procedure Test_Run_Config is
       Fx : constant String := Root & "/tests/fixtures/";
       S  : Status_Code := OK;
@@ -181,6 +214,7 @@ procedure Ada_Polycall_Test is
          Check (D'Length > 0 and then D (D'First) = '{' and then Contains (D, "log_level"),
                 "describe: JSON", D);
       end;
+      Test_Unicode_Path (Fx);
    end Test_Run_Config;
 
    procedure Test_Call is
@@ -190,6 +224,19 @@ procedure Ada_Polycall_Test is
    begin
       Call ("127.0.0.1:1", "debug", "echo", "{}", 1500, Status, Output);
       Expect (E_Transport, Status, "call: no runtime -> E_TRANSPORT");
+      --  timeout_ms must be 1..600000: 0 cannot even be expressed (Positive)
+      declare
+         Zero : Natural := 0 with Volatile;   --  not folded at compile time
+         pragma Warnings (Off, Zero);         --  deliberately never modified
+      begin
+         Call ("127.0.0.1:1", "debug", "echo", "{}", Zero, Status, Output);
+         Check (False, "call: timeout 0 is outside Positive (Constraint_Error)", "no exception");
+      exception
+         when Constraint_Error =>
+            Check (True, "call: timeout 0 is outside Positive (Constraint_Error)");
+      end;
+      Call ("127.0.0.1:1", "debug", "echo", "{}", 600_001, Status, Output);
+      Expect (E_Invalid_Argument, Status, "call: timeout 600001 -> E_INVALID_ARGUMENT");
       if Ep = "" then
          Skip ("call: success / unknown op / deadline / invalid input",
                "POLYCALL_RPC_ENDPOINT not set (run via tests/run-real.sh)");
@@ -207,6 +254,14 @@ procedure Ada_Polycall_Test is
          Check (Out2 = "{""echo"":{""n"":[1,2,3]}}", "call: debug.echo exact output", Out2);
       end;
       Check (Call (Ep, "debug", "echo") = "{""echo"":null}", "call: empty input is sent as null");
+      begin
+         Check (Call (Ep, "debug", "echo", "{}", Timeout_Ms => 600_000) = "{""echo"":{}}",
+                "call: timeout 600000 (the maximum) accepted");
+      exception
+         when E : Polycall_Error =>
+            Check (False, "call: timeout 600000 (the maximum) accepted",
+                   Ada.Exceptions.Exception_Message (E));
+      end;
       Call (Ep, "inventory", "teleport", "{}", 3000, Status, Output);
       Expect (E_Not_Found, Status, "call: unknown operation -> E_NOT_FOUND");
       Check (Contains (To_String (Output), "operation.unknown"), "call: unknown operation error object",
@@ -386,6 +441,70 @@ procedure Ada_Polycall_Test is
       begin
          Check (To_String (M.Payload) = "0123456789" and To_String (M.Id) = "m-small",
                 "recv: 4-byte buffer -> E_TOO_LARGE kept the message queued (regrown)");
+      end;
+      Send (A, Endpoint (B), "0123456789", "m-exact");
+      declare
+         M : constant Message := Receive (B, 1000, Initial_Capacity => 10);
+      begin
+         Check (To_String (M.Payload) = "0123456789" and To_String (M.Id) = "m-exact",
+                "recv: buffer of exactly the payload size");
+      end;
+      Status := OK;
+      begin
+         declare
+            M : constant Message := Receive (B, 0);
+         begin
+            Check (False, "recv: poll (timeout 0) on an empty inbox -> E_TIMEOUT", To_String (M.Id));
+         end;
+      exception
+         when E : Polycall_Error => Status := Status_Of (E);
+      end;
+      Expect (E_Timeout, Status, "recv: poll (timeout 0) on an empty inbox -> E_TIMEOUT");
+      Send (A, Endpoint (B), "queued", "m-queued");
+      declare
+         M : constant Message := Receive (B, 0);
+      begin
+         Check (To_String (M.Id) = "m-queued", "recv: poll (timeout 0) returns a queued message");
+      end;
+      Send (A, Endpoint (B), "queued", "m-queued-2");
+      declare
+         T0 : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+         M  : constant Message := Receive (B, Wait_Forever);
+      begin
+         Check (To_String (M.Id) = "m-queued-2" and then Ada.Calendar.Clock - T0 < 2.0,
+                "recv: Wait_Forever (UINT32_MAX) returns a queued message at once");
+      end;
+
+      --  identifier lengths: 1..63 bytes; the binding's buffers are 64 incl. NUL
+      declare
+         Id63  : constant String := (1 .. 63 => 'n');
+         Mid63 : constant String := (1 .. 63 => 'm');
+         Long  : Peer;
+      begin
+         Open (Long, Id63);
+         Check (Node_Id (Long) = Id63, "ids: 63-byte node id round-trips");
+         Send (Long, Endpoint (B), "id63", Mid63);
+         declare
+            M : constant Message := Receive (B, 5000);
+         begin
+            Check (To_String (M.Sender) = Id63 and then To_String (M.Id) = Mid63,
+                   "ids: 63-byte sender and message id arrive intact");
+         end;
+         Close (Long);
+         Status := OK;
+         begin
+            Open (Long, Id63 & "n");
+         exception
+            when E : Polycall_Error => Status := Status_Of (E);
+         end;
+         Expect (E_Invalid_Argument, Status, "ids: 64-byte node id -> E_INVALID_ARGUMENT");
+         Status := OK;
+         begin
+            Send (A, Endpoint (B), "x", Mid63 & "m");
+         exception
+            when E : Polycall_Error => Status := Status_Of (E);
+         end;
+         Expect (E_Invalid_Argument, Status, "ids: 64-byte message id -> E_INVALID_ARGUMENT");
       end;
 
       --  send-only node

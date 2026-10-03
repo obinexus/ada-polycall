@@ -1,0 +1,6 @@
+# QA fixture: a valid configuration under a non-ASCII (UTF-8) file name.
+# polycall_ffi_run_config() must open it by its UTF-8 path on every platform
+# (the core uses _wfopen on Windows since polycall 58bae1b).
+log_level=info
+network_timeout=5000
+tls_enabled=false

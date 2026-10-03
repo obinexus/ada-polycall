@@ -83,8 +83,8 @@ program with the loader's `libpolycall.so.1: cannot open shared object file`
 (exit 127); a 1.0 library without the binding ABI v1 symbols with
 `undefined symbol: polycall_...` (exit 127); neither is a crash. A library
 that reports another binding ABI is refused: `Check_ABI`, `Run_Config`,
-`Describe`, `Call` and `Open` fail with `E_UNSUPPORTED` (`Polycall_Error`
-naming the ABI it reported).
+`Describe`, `Call` and `Open` return or raise `E_UNSUPPORTED` (the raising
+forms with a `Polycall_Error` naming the ABI it reported).
 `make test-loader` checks all three against fake libraries.
 
 Windows: the Makefile builds `.exe` programs, but the binding has not been

@@ -641,6 +641,83 @@ procedure Ada_Polycall_Test is
       end Done;
    end Sender_Task;
 
+   --  One task of concurrent calls: 20 debug.echo calls with distinct inputs
+   --  (exact outputs) and an unknown operation (status + name), then 50
+   --  rounds of the string-returning calls on its own node.
+   task type Caller_Task is
+      entry Start (Index : Natural; Target : String);
+      entry Done (Call_Wrong, Node_Wrong : out Natural);
+   end Caller_Task;
+
+   task body Caller_Task is
+      Idx      : Natural := 0;
+      Ep       : Unbounded_String;
+      Bad_Call : Natural := 0;
+      Bad_Node : Natural := 0;
+   begin
+      accept Start (Index : Natural; Target : String) do
+         Idx := Index;
+         Ep := To_Unbounded_String (Target);
+      end Start;
+      if Length (Ep) > 0 then
+         for I in 0 .. 19 loop
+            declare
+               Input : constant String :=
+                 "{""t"":" & Img (Idx) & ",""i"":" & Img (I) & "}";
+            begin
+               if Call (To_String (Ep), "debug", "echo", Input, 5000)
+                 /= "{""echo"":" & Input & "}"
+               then
+                  Bad_Call := Bad_Call + 1;
+               end if;
+            exception
+               when Polycall_Error => Bad_Call := Bad_Call + 1;
+            end;
+         end loop;
+         begin
+            declare
+               Ignored : constant String :=
+                 Call (To_String (Ep), "inventory", "teleport", "{}", 5000);
+            begin
+               Bad_Call := Bad_Call + 1;
+            end;
+         exception
+            when E : Polycall_Error =>
+               if Status_Of (E) /= E_Not_Found
+                 or else not Contains (Ada.Exceptions.Exception_Message (E),
+                                       "POLYCALL_E_NOT_FOUND")
+               then
+                  Bad_Call := Bad_Call + 1;
+               end if;
+         end;
+      end if;
+      declare
+         Name : constant String := "ada-c" & Img (Idx);
+         Node : Peer;
+      begin
+         Open (Node, Name);
+         declare
+            Ep0 : constant String := Endpoint (Node);
+         begin
+            for I in 1 .. 50 loop
+               if Node_Id (Node) /= Name or else Endpoint (Node) /= Ep0
+                 or else not Contains (Health (Node), """node_id"":""" & Name & """")
+                 or else List (Node) /= "{}"
+               then
+                  Bad_Node := Bad_Node + 1;
+               end if;
+            end loop;
+         end;
+         Close (Node);
+      exception
+         when Polycall_Error => Bad_Node := Bad_Node + 50;
+      end;
+      accept Done (Call_Wrong, Node_Wrong : out Natural) do
+         Call_Wrong := Bad_Call;
+         Node_Wrong := Bad_Node;
+      end Done;
+   end Caller_Task;
+
    package String_Sets is new Ada.Containers.Indefinite_Ordered_Sets (String);
 
    procedure Test_Tasks is
@@ -725,6 +802,30 @@ procedure Ada_Polycall_Test is
       exception
          when E : Polycall_Error =>
             Check (False, "concurrent senders", Ada.Exceptions.Exception_Message (E));
+      end;
+
+      declare
+         Rpc     : constant String := Env ("POLYCALL_RPC_ENDPOINT");
+         Callers : array (0 .. 3) of Caller_Task;
+         Calls, Nodes, C, N : Natural := 0;
+      begin
+         for I in Callers'Range loop
+            Callers (I).Start (I, Rpc);
+         end loop;
+         for I in Callers'Range loop
+            Callers (I).Done (C, N);
+            Calls := Calls + C;
+            Nodes := Nodes + N;
+         end loop;
+         if Rpc = "" then
+            Skip ("concurrent calls: 4 tasks x 20 Call, exact outputs and errors",
+                  "POLYCALL_RPC_ENDPOINT not set (run via tests/run-real.sh)");
+         else
+            Check (Calls = 0, "concurrent calls: 4 tasks x 20 Call, exact outputs and errors",
+                   Img (Calls) & " wrong");
+         end if;
+         Check (Nodes = 0, "concurrent node calls: 4 tasks x 50 Node_Id/Endpoint/Health/List",
+                Img (Nodes) & " wrong");
       end;
    end Test_Tasks;
 
